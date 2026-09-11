@@ -67,7 +67,6 @@ module.exports = async (req, res) => {
       console.error('Supabase status:', response.status);
       console.error('Supabase response:', raw);
 
-      // 名額全部額滿
       if (
         raw.includes('名額') ||
         raw.includes('額滿') ||
@@ -110,4 +109,4 @@ module.exports = async (req, res) => {
       error: '目前無法連線至分組系統'
     });
   }
-};
+};ㄌ
