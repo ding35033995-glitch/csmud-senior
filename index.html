@@ -22,15 +22,227 @@ const planets=[
  {name:'天王星',group:'天王星組',emoji:'♅',tag:'獨特派',desc:'像側躺自轉的天王星，不走尋常路，總用自己的方式看世界。'},
  {name:'海王星',group:'海王星組',emoji:'♆',tag:'神秘派',desc:'像遙遠深藍的海王星，神秘而深邃，藏著無限想像與可能。'}
 ];
-const questions=['到了新的班級，你通常會怎麼開始？','團體活動時，你最享受哪一種角色？','遇到陌生任務時，你的第一反應是？','大家意見不一致時，你會？','臨時收到新的活動安排，你會？','你最容易被哪種人吸引成為朋友？','你認為自己最值得被看見的特質是？','如果團隊卡住了，你比較可能？','理想的大學生活對你來說是？','今天測驗結束，你最期待？'];
-const opts=[['主動找人聊天','先觀察氣氛','直接開始行動','找一個有共同話題的人'],['提出點子','帶頭執行','照顧大家感受','把流程整理好'],['先試了再說','先找資料','找大家討論','想一個不一樣的方法'],['提出自己的想法','協調大家的立場','讓大家先冷靜','找出最快能執行的方法'],['覺得很刺激','先確認細節','先看看大家怎麼想','立刻調整計畫'],['很有活力的人','可靠穩定的人','很有想法的人','會讓大家自在的人'],['反應很快','很會照顧人','很有責任感','總能想到新點子'],['換個方法試試','把問題拆小','找人一起解決','帶大家先做起來'],['認識很多新朋友','嘗試以前沒做過的事','和夥伴一起成長','留下很多值得回憶的事'],['找到適合自己的夥伴','發現自己的新面貌','開始一段新的冒險','看看自己會是哪顆行星']];
-const map=[[0,2,4,6],[1,3,5,7],[4,0,7,2],[5,3,6,1],[2,7,1,4],[6,5,3,0],[0,4,7,5],[1,6,2,3],[7,2,5,4],[3,1,6,0]];
-let state={q:0,scores:Array(8).fill(0),name:''};const app=document.getElementById('app');
-function home(){app.innerHTML=`<div class="screen"><section class="panel hero"><span class="badge">學長姐專用｜行星人格分組測驗</span><h1>找到你落腳行星</h1><p>在認親大會之前，先看看你將於哪顆行星降落。在那裡，引領你大學生活燈塔－ 直屬正在等你</p><div class="row"><button class="btn btn-primary" onclick="start()">開始探索</button></div><p class="small">學長姐分為 7 組：金星、地球、火星、木星、土星、天王星、海王星；水星不列入分組。</p></section></div>`}
-function start(){state={q:0,scores:Array(8).fill(0),name:''};renderQ()}
-function renderQ(){const i=state.q;if(i<questions.length){app.innerHTML=`<div class="screen"><section class="panel"><div class="top"><span class="qnum">第 ${i+1} / ${questions.length+1} 題</span><span class="qnum">學長姐｜七大行星分組</span></div><div class="progress"><div style="width:${(i/(questions.length+1))*100}%"></div></div><h2>${questions[i]}</h2><div class="options">${opts[i].map((x,j)=>`<button class="opt" onclick="answer(${j})">${x}</button>`).join('')}</div><div class="row"><button class="btn btn-ghost" ${i===0?'disabled':''} onclick="prev()">上一題</button></div></section></div>`}else{app.innerHTML=`<div class="screen"><section class="panel"><div class="top"><span class="qnum">第 ${questions.length+1} / ${questions.length+1} 題</span><span class="qnum">最後一步</span></div><div class="progress"><div style="width:100%"></div></div><h2>請留下年級/本名 （ex:大三 彼得帕克）</h2><input id="identity" class="admin-input" type="text" maxlength="50" placeholder="大三 彼得帕克"><p class="small">此資訊僅供活動主辦方查看。</p><div class="row"><button class="btn btn-ghost" onclick="prev()">上一題</button><button class="btn btn-primary" onclick="submitIdentity()">查看我的結果</button></div></section></div>`}}
-function answer(j){state.scores[map[state.q][j]]++;state.q++;renderQ()}
-function prev(){if(state.q>0){state.q--;renderQ()}}
-async function submitIdentity(){const name=(document.getElementById('identity')?.value||'').trim();if(!name){alert('請留下年級與本名');return}state.name=name;const buttons=[...document.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);try{const r=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,scores:state.scores})});const data=await r.json();if(!r.ok)throw new Error(data.error||'送出失敗');const p=planets[data.groupIndex-1];if(!p)throw new Error('分組結果異常');app.innerHTML=`<div class="screen"><section class="panel result"><span class="badge">學長姐｜測驗完成</span><div class="planet">${p.emoji}</div><div class="qnum">你的落腳行星</div><h2>${p.name}｜${p.tag}</h2><p class="desc">${p.desc}</p><div class="groupbox"><div class="groupname">${p.group}</div><div class="small">這就是你的落腳行星。</div></div><p class="small">你的參加編號：${data.id}</p><div class="row"><button class="btn btn-primary" onclick="home()">完成</button></div></section></div>`}catch(e){buttons.forEach(b=>b.disabled=false);alert(e.message)}}
+
+const questions=[
+ '到了新的班級，你通常會怎麼開始？',
+ '團體活動時，你最享受哪一種角色？',
+ '遇到陌生任務時，你的第一反應是？',
+ '大家意見不一致時，你會？',
+ '臨時收到新的活動安排，你會？',
+ '你最容易被哪種人吸引成為朋友？',
+ '你認為自己最值得被看見的特質是？',
+ '如果團隊卡住了，你比較可能？',
+ '理想的大學生活對你來說是？',
+ '今天測驗結束，你最期待？'
+];
+
+const opts=[
+ ['主動找人聊天','先觀察氣氛','直接開始行動','找一個有共同話題的人'],
+ ['提出點子','帶頭執行','照顧大家感受','把流程整理好'],
+ ['先試了再說','先找資料','找大家討論','想一個不一樣的方法'],
+ ['提出自己的想法','協調大家的立場','讓大家先冷靜','找出最快能執行的方法'],
+ ['覺得很刺激','先確認細節','先看看大家怎麼想','立刻調整計畫'],
+ ['很有活力的人','可靠穩定的人','很有想法的人','會讓大家自在的人'],
+ ['反應很快','很會照顧人','很有責任感','總能想到新點子'],
+ ['換個方法試試','把問題拆小','找人一起解決','帶大家先做起來'],
+ ['認識很多新朋友','嘗試以前沒做過的事','和夥伴一起成長','留下很多值得回憶的事'],
+ ['找到適合自己的夥伴','發現自己的新面貌','開始一段新的冒險','看看自己會是哪顆行星']
+];
+
+const map=[
+ [0,2,4,6],
+ [1,3,5,7],
+ [4,0,7,2],
+ [5,3,6,1],
+ [2,7,1,4],
+ [6,5,3,0],
+ [0,4,7,5],
+ [1,6,2,3],
+ [7,2,5,4],
+ [3,1,6,0]
+];
+
+let state={
+ q:0,
+ scores:Array(8).fill(0),
+ name:''
+};
+
+const app=document.getElementById('app');
+
+function home(){
+ app.innerHTML=`
+ <div class="screen">
+  <section class="panel hero">
+   <span class="badge">學長姐專用｜行星人格分組測驗</span>
+   <h1>找到你落腳行星</h1>
+   <p>在認親大會之前，先看看你將於哪顆行星降落。在那裡，引領你大學生活燈塔－ 直屬正在等你</p>
+   <div class="row">
+    <button class="btn btn-primary" onclick="start()">開始探索</button>
+   </div>
+  </section>
+ </div>
+ `;
+}
+
+function start(){
+ state={
+  q:0,
+  scores:Array(8).fill(0),
+  name:''
+ };
+ renderQ();
+}
+
+function renderQ(){
+ const i=state.q;
+
+ if(i<questions.length){
+  app.innerHTML=`
+  <div class="screen">
+   <section class="panel">
+    <div class="top">
+     <span class="qnum">第 ${i+1} / ${questions.length+1} 題</span>
+     <span class="qnum">學長姐｜行星分組</span>
+    </div>
+
+    <div class="progress">
+     <div style="width:${(i/(questions.length+1))*100}%"></div>
+    </div>
+
+    <h2>${questions[i]}</h2>
+
+    <div class="options">
+     ${opts[i].map((x,j)=>`
+      <button class="opt" onclick="answer(${j})">${x}</button>
+     `).join('')}
+    </div>
+
+    <div class="row">
+     <button class="btn btn-ghost" ${i===0?'disabled':''} onclick="prev()">上一題</button>
+    </div>
+   </section>
+  </div>
+  `;
+ }else{
+  app.innerHTML=`
+  <div class="screen">
+   <section class="panel">
+    <div class="top">
+     <span class="qnum">第 ${questions.length+1} / ${questions.length+1} 題</span>
+     <span class="qnum">最後一步</span>
+    </div>
+
+    <div class="progress">
+     <div style="width:100%"></div>
+    </div>
+
+    <h2>請留下年級/本名 （ex:大三 彼得帕克）</h2>
+
+    <input
+     id="identity"
+     class="admin-input"
+     type="text"
+     maxlength="50"
+     placeholder="大三 彼得帕克"
+    >
+
+    <p class="small">此資訊僅供活動主辦方查看。</p>
+
+    <div class="row">
+     <button class="btn btn-ghost" onclick="prev()">上一題</button>
+     <button class="btn btn-primary" onclick="submitIdentity()">查看我的結果</button>
+    </div>
+   </section>
+  </div>
+  `;
+ }
+}
+
+function answer(j){
+ state.scores[map[state.q][j]]++;
+ state.q++;
+ renderQ();
+}
+
+function prev(){
+ if(state.q>0){
+  state.q--;
+  renderQ();
+ }
+}
+
+async function submitIdentity(){
+ const name=(document.getElementById('identity')?.value||'').trim();
+
+ if(!name){
+  alert('請留下年級與本名');
+  return;
+ }
+
+ state.name=name;
+
+ const buttons=[...document.querySelectorAll('button')];
+ buttons.forEach(b=>b.disabled=true);
+
+ try{
+  const r=await fetch('/api/submit',{
+   method:'POST',
+   headers:{
+    'Content-Type':'application/json'
+   },
+   body:JSON.stringify({
+    name,
+    scores:state.scores
+   })
+  });
+
+  const data=await r.json();
+
+  if(!r.ok){
+   throw new Error(data.error||'送出失敗');
+  }
+
+  const p=planets[data.groupIndex-1];
+
+  if(!p){
+   throw new Error('分組結果異常');
+  }
+
+  app.innerHTML=`
+  <div class="screen">
+   <section class="panel result">
+    <span class="badge">學長姐｜測驗完成</span>
+
+    <div class="planet">${p.emoji}</div>
+
+    <div class="qnum">你的落腳行星</div>
+
+    <h2>${p.name}｜${p.tag}</h2>
+
+    <p class="desc">${p.desc}</p>
+
+    <div class="groupbox">
+     <div class="groupname">${p.group}</div>
+     <div class="small">這就是你的落腳行星。</div>
+    </div>
+
+    <p class="small">你的參加編號：${data.id}</p>
+
+    <div class="row">
+     <button class="btn btn-primary" onclick="home()">完成</button>
+    </div>
+   </section>
+  </div>
+  `;
+
+ }catch(e){
+  buttons.forEach(b=>b.disabled=false);
+  alert(e.message);
+ }
+}
+
 home();
-</script></body></html>
+</script>
+</body>
+</html>
